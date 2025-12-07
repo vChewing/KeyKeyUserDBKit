@@ -77,7 +77,7 @@ public class PhonaSetTests {
 
   [Fact]
   public void DecodeQueryStringAsKeyArray_BigramFormat_ShouldDecodeLastPart() {
-    // 測試 bigram 格式（以 ~ 開頭）
+    // 測試 bigram 格式（以 ~ 開頭且含空格）
     var result = PhonaSet.DecodeQueryStringAsKeyArray("~00 00");
     Assert.NotEmpty(result);
   }
@@ -86,6 +86,36 @@ public class PhonaSetTests {
   public void DecodeQueryStringAsKeyArray_UnigramFormat_ShouldReturnArray() {
     var result = PhonaSet.DecodeQueryStringAsKeyArray("0000");
     Assert.NotNull(result);
+  }
+
+  // ~ 開頭的 Unigram 測試
+  // 這些 qstring 恰好以 ~ (ASCII 126) 作為第一個字元的低位元組，
+  // 但它們不是 bigram 格式（沒有空格分隔符）
+  [Theory]
+  [InlineData("~_]O", new[] { "ㄋㄚˋ", "ㄌㄧˇ" })] // 那裡
+  [InlineData("~_3_", new[] { "ㄋㄚˋ", "ㄘˋ" })] // 那次
+  [InlineData("~_XO", new[] { "ㄋㄚˋ", "ㄇㄧˇ" })] // 納米
+  [InlineData("~@U:", new[] { "ㄧㄚˊ", "ㄑㄧㄢ" })] // 牙籤
+  [InlineData("~\\cH", new[] { "ㄐㄧㄥˇ", "ㄏㄡˊ" })] // 儆猴
+  [InlineData("~=KP6CJ1", new[] { "ㄉㄨㄥ", "ㄇㄚˇ", "ㄏㄜˊ", "ㄕㄚ" })] // 冬馬和紗
+  [InlineData("~=ZX01", new[] { "ㄉㄨㄥ", "ㄐㄧㄡˇ", "ㄑㄩ" })] // 東九區
+  [InlineData("~7]K", new[] { "ㄓㄠ", "ㄩㄣˊ" })] // 朝雲
+  [InlineData("~Ip4", new[] { "ㄋㄧㄢˊ", "ㄊㄧㄝ" })] // 粘貼
+  [InlineData("~Jc=", new[] { "ㄘㄣˊ", "ㄧㄥ" })] // 岑纓
+  public void DecodeUnigramStartingWithTilde_ShouldDecodeCorrectly(string input, string[] expected) {
+    var result = PhonaSet.DecodeQueryStringAsKeyArray(input);
+    Assert.Equal(expected, result);
+  }
+
+  // CandidateOverride Tests
+  // user_candidate_override_cache 表中的 qstring 是純 2 字元編碼，無前綴
+  [Theory]
+  [InlineData("}g", new[] { "ㄧㄡˋ" })] // 又
+  [InlineData("}l", new[] { "ㄙㄨㄥˋ" })] // 送
+  [InlineData("~\\", new[] { "ㄐㄧㄥˇ" })] // 井
+  public void DecodeCandidateOverrideQstring_ShouldDecodeCorrectly(string input, string[] expected) {
+    var result = PhonaSet.DecodeQueryStringAsKeyArray(input);
+    Assert.Equal(expected, result);
   }
 
   [Theory]

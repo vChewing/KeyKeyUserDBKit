@@ -255,8 +255,12 @@ extension KeyKeyUserDBKit.PhonaSet {
   ///
   /// - 格式1 (unigram): 連續的 2-char absolute order 字串，每 2 個字元代表一個注音音節
   /// - 格式2 (bigram):  "~{前字注音2char} {當前字注音2char}"，用空格分隔
+  ///
+  /// - 注意: `~` (ASCII 126) 可能是有效的編碼字元（order % 79 = 78），
+  ///         只有當 `~` 後面有空格時才是真正的 bigram 格式
   public static func decodeQueryString(_ queryString: String) -> String {
-    if queryString.hasPrefix("~") {
+    // 只有當 ~ 後面有空格時才是 bigram 格式
+    if queryString.hasPrefix("~"), queryString.dropFirst().contains(" ") {
       return decodeBigram(queryString)
     }
 
@@ -270,8 +274,12 @@ extension KeyKeyUserDBKit.PhonaSet {
   ///
   /// - 格式1 (unigram): 連續的 2-char absolute order 字串，每 2 個字元代表一個注音音節
   /// - 格式2 (bigram):  "~{前字注音2char} {當前字注音2char}"，用空格分隔
+  ///
+  /// - 注意: `~` (ASCII 126) 可能是有效的編碼字元（order % 79 = 78），
+  ///         只有當 `~` 後面有空格時才是真正的 bigram 格式
   public static func decodeQueryStringAsKeyArray(_ queryString: String) -> [String] {
-    if queryString.hasPrefix("~") {
+    // 只有當 ~ 後面有空格時才是 bigram 格式
+    if queryString.hasPrefix("~"), queryString.dropFirst().contains(" ") {
       return decodeBigramAsKeyArray(queryString)
     }
 
@@ -304,10 +312,12 @@ extension KeyKeyUserDBKit.PhonaSet {
   }
 
   /// 解碼連續的 2-char 音節
+  /// - Note: 若字串長度為奇數，只解碼前面偶數個字元
   private static func decodeSyllables(_ stringToDecode: String) -> [String] {
-    guard stringToDecode.count.isMultiple(of: 2) else { return [] }
+    let decodableLength = stringToDecode.count - (stringToDecode.count % 2)
+    guard decodableLength >= 2 else { return [] }
 
-    return stride(from: 0, to: stringToDecode.count, by: 2).compactMap { index in
+    return stride(from: 0, to: decodableLength, by: 2).compactMap { index in
       let start = stringToDecode.index(stringToDecode.startIndex, offsetBy: index)
       let end = stringToDecode.index(start, offsetBy: 2)
       let absStr = String(stringToDecode[start ..< end])

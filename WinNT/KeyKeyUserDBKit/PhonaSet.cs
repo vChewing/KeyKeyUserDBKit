@@ -304,9 +304,13 @@ public readonly struct PhonaSet : IEquatable<PhonaSet> {
   /// 將資料庫中的 qstring 解碼為注音符號
   /// - 格式1 (unigram): 連續的 2-char absolute order 字串，每 2 個字元代表一個注音音節
   /// - 格式2 (bigram):  "~{前字注音2char} {當前字注音2char}"，用空格分隔
+  /// 
+  /// 注意: ~ (ASCII 126) 可能是有效的編碼字元（order % 79 = 78），
+  /// 只有當 ~ 後面有空格時才是真正的 bigram 格式
   /// </summary>
   public static string DecodeQueryString(string queryString) {
-    if (queryString.StartsWith('~'))
+    // 只有當 ~ 後面有空格時才是 bigram 格式
+    if (queryString.StartsWith('~') && queryString[1..].Contains(' '))
       return DecodeBigram(queryString);
 
     if (queryString.Length % 2 != 0)
@@ -318,9 +322,13 @@ public readonly struct PhonaSet : IEquatable<PhonaSet> {
 
   /// <summary>
   /// 將資料庫中的 qstring 解碼為注音符號陣列（用於 Gram 的 keyArray）
+  /// 
+  /// 注意: ~ (ASCII 126) 可能是有效的編碼字元（order % 79 = 78），
+  /// 只有當 ~ 後面有空格時才是真正的 bigram 格式
   /// </summary>
   public static string[] DecodeQueryStringAsKeyArray(string queryString) {
-    if (queryString.StartsWith('~'))
+    // 只有當 ~ 後面有空格時才是 bigram 格式
+    if (queryString.StartsWith('~') && queryString[1..].Contains(' '))
       return DecodeBigramAsKeyArray(queryString);
 
     if (queryString.Length % 2 != 0)
@@ -356,15 +364,16 @@ public readonly struct PhonaSet : IEquatable<PhonaSet> {
   }
 
   /// <summary>
-  /// 解碼連續的 2-char 音節
+  /// 解碼連續的 2-char 音節。若字串長度為奇數，只解碼前面偶數個字元。
   /// </summary>
   private static List<string> DecodeSyllables(string stringToDecode) {
-    if (stringToDecode.Length % 2 != 0)
+    var decodableLength = stringToDecode.Length - (stringToDecode.Length % 2);
+    if (decodableLength < 2)
       return [];
 
     var result = new List<string>();
 
-    for (var i = 0; i < stringToDecode.Length; i += 2) {
+    for (var i = 0; i < decodableLength; i += 2) {
       var absStr = stringToDecode.Substring(i, 2);
       var phonaSet = FromAbsoluteOrderString(absStr);
       if (phonaSet is null) continue;

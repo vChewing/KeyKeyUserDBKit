@@ -119,6 +119,50 @@ struct PhonaSetTests {
     #expect(!result.isEmpty)
   }
 
+  // MARK: - ~ 開頭的 Unigram 測試
+
+  // 這些 qstring 恰好以 ~ (ASCII 126) 作為第一個字元的低位元組，
+  // 但它們不是 bigram 格式（沒有空格分隔符）
+
+  @Test(
+    "Decode Unigram starting with tilde character",
+    arguments: [
+      // ~ 可能是有效編碼字元（order % 79 = 78）
+      // 只有當 ~ 後面有空格時才是 bigram 格式
+      ("~_]O", ["ㄋㄚˋ", "ㄌㄧˇ"]), // 那裡
+      ("~_3_", ["ㄋㄚˋ", "ㄘˋ"]), // 那次
+      ("~_XO", ["ㄋㄚˋ", "ㄇㄧˇ"]), // 納米
+      ("~@U:", ["ㄧㄚˊ", "ㄑㄧㄢ"]), // 牙籤
+      ("~\\cH", ["ㄐㄧㄥˇ", "ㄏㄡˊ"]), // 儆猴
+      ("~=KP6CJ1", ["ㄉㄨㄥ", "ㄇㄚˇ", "ㄏㄜˊ", "ㄕㄚ"]), // 冬馬和紗
+      ("~=ZX01", ["ㄉㄨㄥ", "ㄐㄧㄡˇ", "ㄑㄩ"]), // 東九區
+      ("~7]K", ["ㄓㄠ", "ㄩㄣˊ"]), // 朝雲
+      ("~Ip4", ["ㄋㄧㄢˊ", "ㄊㄧㄝ"]), // 粘貼
+      ("~Jc=", ["ㄘㄣˊ", "ㄧㄥ"]) // 岑纓
+    ]
+  )
+  func decodeUnigramStartingWithTilde(input: String, expected: [String]) {
+    let result = KeyKeyUserDBKit.PhonaSet.decodeQueryStringAsKeyArray(input)
+    #expect(result == expected, "Input '\(input)' should decode to \(expected), got \(result)")
+  }
+
+  // MARK: - CandidateOverride Tests
+
+  // user_candidate_override_cache 表中的 qstring 是純 2 字元編碼，無前綴
+
+  @Test(
+    "Decode CandidateOverride qstring",
+    arguments: [
+      ("}g", ["ㄧㄡˋ"]), // 又
+      ("}l", ["ㄙㄨㄥˋ"]), // 送
+      ("~\\", ["ㄐㄧㄥˇ"]) // 井
+    ]
+  )
+  func decodeCandidateOverrideQstring(input: String, expected: [String]) {
+    let result = KeyKeyUserDBKit.PhonaSet.decodeQueryStringAsKeyArray(input)
+    #expect(result == expected, "Input '\(input)' should decode to \(expected), got \(result)")
+  }
+
   // MARK: - Empty String Tests
 
   @Test("From absolute order string with empty string should return nil")
