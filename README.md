@@ -8,6 +8,18 @@ Yahoo! 奇摩輸入法 (KeyKey) 使用者資料庫解密 Swift Package。
 >
 > C#: [![.NET](https://github.com/vChewing/KeyKeyUserDBKit/actions/workflows/ci.yml/badge.svg)](https://github.com/vChewing/KeyKeyUserDBKit/actions/workflows/ci.yml) [![NuGet](https://img.shields.io/nuget/v/vChewing.Utils.KeyKeyUserDBKit)](https://www.nuget.org/packages/vChewing.Utils.KeyKeyUserDBKit) [![License: LGPL v3](https://img.shields.io/badge/License-LGPL%20v3-blue.svg)](https://www.gnu.org/licenses/lgpl-3.0)
 
+## 目的
+
+奇摩輸入法在 2012 年停止開發，最終官方支援的 macOS 系統版本是 macOS 10.8 Mountain Lion。從 macOS 10.9 Mavericks 開始，該輸入法原廠的片語編輯器徹底罷工。雖然官方釋出的最終原始碼（僅限 Yahoo 奇摩被允許授權公開的部分，不包含 SQLite CEROD）小修小補之後仍舊可以將片語編輯器重新建置，但因為 CEROD 原始碼的缺失、導致輸入法本體無法建置成「可以無縫讀取既有使用者片語資料」的樣子。
+
+於是呢，從 macOS 10.9 Mavericks 至 macOS 26 Tahoe 的這些年間，唯一可以抽取到使用者片語的方法便是利用 NSConnection 跨程通訊的方式向奇摩輸入法的 Process 請求使用者片語資料、且只能請求到 Unigram。該輸入法內建的片語編輯器就是這樣與輸入法通訊的。但這要求奇摩輸入法必須正在運行。而 macOS 27 開始不再有 Rosetta 2 可用、會導致奇摩輸入法再無可能運作使用。
+
+這樣一來，就不能用同樣的方法救出使用者片語了。對既有的那些與奇摩輸入法互相陪伴了十幾年、積累了成千上萬筆使用者片語的資深使用者群體而言，這是空前的災難。
+
+為了因應這個需求，唯音專案新開發了 KeyKeyUserDBKit 這款開發套件，可以做到在不運行奇摩輸入法的前提下從使用者資料庫  `SmartMandarinUserData.db` 救出使用者片語（Unigram、Bigram-Cache、Candidate-Override）資料。
+
+唯音專案推出此套件餽贈社會，也希望能得到一些捐助。詳細資訊可洽[唯音輸入法的軟體主頁](https://vchewing.github.io/README.html)。也[歡迎各位 macOS 奇摩輸入法難民們嘗試唯音輸入法](https://vchewing.github.io/manual/onboarding_kimo.html)。
+
 ## 功能
 
 - 🔓 解密 SQLite SEE AES-128 加密的使用者資料庫 (`SmartMandarinUserData.db`)
