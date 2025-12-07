@@ -64,6 +64,27 @@ extension KeyKeyUserDBKit {
     /// 資料區域大小
     public static let dataAreaSize = pageSize - reservedBytes // 992 bytes
 
+    /// 檢查資料庫檔案是否為加密的（非標準 SQLite 格式）
+    /// - Parameter url: 資料庫檔案 URL
+    /// - Returns: 如果檔案是加密的回傳 true，否則回傳 false
+    public static func isEncryptedDatabase(at url: URL) -> Bool {
+      guard FileManager.default.fileExists(atPath: url.path) else {
+        return false
+      }
+
+      do {
+        let data = try Data(contentsOf: url)
+        guard data.count >= sqliteMagic.count else {
+          return true // 檔案太小，可能是加密的
+        }
+
+        // 如果開頭不是 SQLite 魔術數字，則是加密的
+        return Array(data.prefix(sqliteMagic.count)) != sqliteMagic
+      } catch {
+        return true // 無法讀取，假設是加密的
+      }
+    }
+
     // MARK: - Public Methods
 
     /// 解密整個資料庫檔案
@@ -116,6 +137,9 @@ extension KeyKeyUserDBKit {
     }
 
     // MARK: Private
+
+    /// SQLite 資料庫魔術數字
+    private static let sqliteMagic: [UInt8] = Array("SQLite format 3\0".utf8)
 
     private let key: [UInt8]
 

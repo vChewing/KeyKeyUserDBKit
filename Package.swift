@@ -39,7 +39,7 @@ let package = Package(
       targets: ["KeyKeyUserDBKit"]
     ),
     .executable(
-      name: "keykey-decrypt",
+      name: "kkdecrypt",
       targets: ["KeyKeyDecryptCLI"]
     ),
   ],

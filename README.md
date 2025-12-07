@@ -31,7 +31,7 @@ KeyKeyUserDBKit/
 │   │   ├── PhonaSet.swift         # 注音符號處理
 │   │   ├── SEEDecryptor.swift     # SQLite SEE AES-128 解密器
 │   │   └── UserDatabase.swift     # 使用者資料庫讀取器
-│   └── KeyKeyDecryptCLI/          # 命令列工具 (keykey-decrypt)
+│   └── KeyKeyDecryptCLI/          # 命令列工具 (kkdecrypt)
 │       └── main.swift
 └── Tests/
     └── KeyKeyUserDBKitTests/      # 單元測試 (Swift Testing)
@@ -146,10 +146,10 @@ print(phona.description) // "ㄍㄨㄛˋ"
 swift build -c release
 
 # 解密資料庫
-.build/release/keykey-decrypt SmartMandarinUserData.db [output.db]
+.build/release/kkdecrypt SmartMandarinUserData.db [output.db]
 
 # 或使用 swift run
-swift run keykey-decrypt SmartMandarinUserData.db decrypted.db
+swift run kkdecrypt SmartMandarinUserData.db decrypted.db
 ```
 
 ## API 對照

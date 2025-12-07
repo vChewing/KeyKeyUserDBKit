@@ -5,20 +5,40 @@
 			"request": "launch",
 			"args": [],
 			"cwd": "${workspaceFolder:KeyKeyUserDBKit}",
-			"name": "Debug keykey-decrypt",
-			"target": "keykey-decrypt",
+			"name": "Debug kkdecrypt",
+			"target": "kkdecrypt",
 			"configuration": "debug",
-			"preLaunchTask": "swift: Build Debug keykey-decrypt"
+			"preLaunchTask": "swift: Build Debug kkdecrypt"
 		},
 		{
 			"type": "swift",
 			"request": "launch",
 			"args": [],
 			"cwd": "${workspaceFolder:KeyKeyUserDBKit}",
-			"name": "Release keykey-decrypt",
-			"target": "keykey-decrypt",
+			"name": "Release kkdecrypt",
+			"target": "kkdecrypt",
 			"configuration": "release",
-			"preLaunchTask": "swift: Build Release keykey-decrypt"
+			"preLaunchTask": "swift: Build Release kkdecrypt"
+		},
+		{
+			"type": "swift",
+			"request": "launch",
+			"args": [],
+			"cwd": "${workspaceFolder:KeyKeyUserDBKit}",
+			"name": "Debug kkdecrypt",
+			"target": "kkdecrypt",
+			"configuration": "debug",
+			"preLaunchTask": "swift: Build Debug kkdecrypt"
+		},
+		{
+			"type": "swift",
+			"request": "launch",
+			"args": [],
+			"cwd": "${workspaceFolder:KeyKeyUserDBKit}",
+			"name": "Release kkdecrypt",
+			"target": "kkdecrypt",
+			"configuration": "release",
+			"preLaunchTask": "swift: Build Release kkdecrypt"
 		}
 	]
 }

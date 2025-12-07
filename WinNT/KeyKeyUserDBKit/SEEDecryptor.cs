@@ -51,6 +51,11 @@ public sealed class SEEDecryptor : IDisposable {
   /// </summary>
   public static readonly byte[] DefaultKey = "yahookeykeyuserdb"u8.ToArray()[..KeySize];
 
+  /// <summary>
+  /// SQLite 資料庫魔術數字
+  /// </summary>
+  private static readonly byte[] SqliteMagic = "SQLite format 3\0"u8.ToArray();
+
   private readonly byte[] _key;
   private readonly Aes _aes;
   private bool _disposed;
@@ -76,6 +81,32 @@ public sealed class SEEDecryptor : IDisposable {
     _aes.Key = _key;
     _aes.Mode = CipherMode.ECB;
     _aes.Padding = PaddingMode.None;
+  }
+
+  // MARK: - Static Methods
+
+  /// <summary>
+  /// 檢查資料庫檔案是否為加密的（非標準 SQLite 格式）
+  /// </summary>
+  /// <param name="filePath">資料庫檔案路徑</param>
+  /// <returns>如果檔案是加密的回傳 true，否則回傳 false</returns>
+  public static bool IsEncryptedDatabase(string filePath) {
+    if (!File.Exists(filePath))
+      return false;
+
+    try {
+      using var fs = File.OpenRead(filePath);
+      var header = new byte[SqliteMagic.Length];
+      var bytesRead = fs.Read(header, 0, header.Length);
+
+      if (bytesRead < SqliteMagic.Length)
+        return true; // 檔案太小，可能是加密的
+
+      // 如果開頭不是 SQLite 魔術數字，則是加密的
+      return !header.AsSpan().SequenceEqual(SqliteMagic);
+    } catch {
+      return true; // 無法讀取，假設是加密的
+    }
   }
 
   // MARK: - Public Methods
