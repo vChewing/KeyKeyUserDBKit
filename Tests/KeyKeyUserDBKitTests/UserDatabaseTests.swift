@@ -8,7 +8,7 @@ import UnitTestAssets4KeyKeyUserDBKit
 
 @testable import KeyKeyUserDBKit
 
-@Suite("UserDatabase Tests")
+@Suite("UserDatabase Tests", .serialized)
 struct UserDatabaseTests {
   // MARK: Lifecycle
 
