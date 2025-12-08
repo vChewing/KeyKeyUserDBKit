@@ -192,12 +192,12 @@ swift run kkdecrypt SmartMandarinUserData.db decrypted.db
 
 ### Keystream 產生
 
-```
-Counter Block = Nonce 的副本
-Counter Block[4:8] = 4-byte little-endian counter
-Keystream = AES-ECB(Key, Counter Block)
-Counter 每 16 bytes 遞增 1
-```
+密鑰流（Keystream）的生成方式如下：
+
+1. 複製 Nonce 作為 Counter Block 的初始值
+2. 將 Counter Block 的第 4-7 位元組設為計數器（4-byte little-endian 格式）
+3. 對 Counter Block 執行 AES-ECB 加密，產生 16 bytes 的密鑰流
+4. 每處理 16 bytes 資料後，計數器遞增 1，重複步驟 2-3
 
 ## 注音編碼
 
