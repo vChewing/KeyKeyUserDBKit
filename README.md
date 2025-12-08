@@ -24,7 +24,7 @@ Yahoo! 奇摩輸入法 (KeyKey) 使用者資料庫解密 Swift Package。
 
 - 🔓 解密 SQLite SEE AES-128 加密的使用者資料庫 (`SmartMandarinUserData.db`)
 - 🔤 解碼注音符號 (Bopomofo) qstring 欄位
-- 📖 讀取使用者詞彙資料（單字詞、雙字詞、候選字覆蓋）
+- 📖 讀取使用者詞彙資料（單元圖 (Unigram)、雙元圖 (Bigram)、候選字覆蓋）
 - 🔄 支援 `Sequence` 與 `AsyncSequence` 迭代
 
 ## 專案結構
@@ -114,8 +114,8 @@ for gram in allGrams {
 }
 
 // 或分別讀取各類型資料
-let unigrams = try db.fetchUnigrams()           // 單字詞
-let bigrams = try db.fetchBigrams()             // 雙字詞
+let unigrams = try db.fetchUnigrams()           // 單元圖
+let bigrams = try db.fetchBigrams()             // 雙元圖
 let bigrams5 = try db.fetchBigrams(limit: 5)    // 限制筆數
 let overrides = try db.fetchCandidateOverrides() // 候選字覆蓋
 

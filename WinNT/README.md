@@ -22,7 +22,7 @@
 
 - 🔓 解密 SQLite SEE AES-128 加密的使用者資料庫 (`SmartMandarinUserData.db`)
 - 🔤 解碼注音符號 (Bopomofo) qstring 欄位
-- 📖 讀取使用者詞彙資料（單字詞、雙字詞、候選字覆蓋）
+- 📖 讀取使用者詞彙資料（單元圖、雙元圖、候選字覆蓋）
 - 🔄 支援 `IEnumerable<Gram>` 與 `IAsyncEnumerable<Gram>` 迭代
 
 ## 專案結構
@@ -99,8 +99,8 @@ foreach (var gram in allGrams)
 }
 
 // 或分別讀取各類型資料
-var unigrams = db.FetchUnigrams();           // 單字詞
-var bigrams = db.FetchBigrams();             // 雙字詞
+var unigrams = db.FetchUnigrams();           // 單元圖
+var bigrams = db.FetchBigrams();             // 雙元圖
 var bigrams5 = db.FetchBigrams(5);           // 限制筆數
 var overrides = db.FetchCandidateOverrides(); // 候選字覆蓋
 

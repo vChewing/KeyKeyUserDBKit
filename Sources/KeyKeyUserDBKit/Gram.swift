@@ -29,7 +29,7 @@ extension KeyKeyUserDBKit {
     /// - Parameters:
     ///   - keyArray: 讀音陣列（注音符號）
     ///   - current: 當前漢字
-    ///   - previous: 前一個漢字（僅雙字詞使用）
+    ///   - previous: 前一個漢字（僅雙元圖使用）
     ///   - probability: 機率權重
     ///   - isCandidateOverride: 是否為候選字覆蓋記錄
     public init(
@@ -74,14 +74,14 @@ extension KeyKeyUserDBKit {
     public let keyArray: [String]
     /// 當前漢字
     public let current: String
-    /// 前一個漢字（僅雙字詞使用）
+    /// 前一個漢字（僅雙元圖使用）
     public let previous: String?
     /// 機率權重
     public let probability: Double
     /// 是否為候選字覆蓋記錄
     public let isCandidateOverride: Bool
 
-    /// 是否為單字詞（Unigram）
+    /// 是否為單元圖（Unigram）
     public var isUnigram: Bool { previous == nil }
 
     /// 文字描述

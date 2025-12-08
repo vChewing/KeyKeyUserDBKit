@@ -58,7 +58,7 @@ extension KeyKeyUserDBKit {
 
     // MARK: - Public Methods
 
-    /// 讀取所有使用者單字詞
+    /// 讀取所有使用者單元圖
     public func fetchUnigrams() throws -> [Gram] {
       try actor.sync {
         let sql = "SELECT qstring, current, probability FROM user_unigrams"
@@ -85,7 +85,7 @@ extension KeyKeyUserDBKit {
       }
     }
 
-    /// 讀取使用者雙字詞快取
+    /// 讀取使用者雙元圖快取
     /// - Parameter limit: 限制回傳筆數 (nil 表示全部)
     public func fetchBigrams(limit: Int? = nil) throws -> [Gram] {
       try actor.sync {

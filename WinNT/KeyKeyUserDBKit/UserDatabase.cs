@@ -48,7 +48,7 @@ public sealed class UserDatabase : IDisposable, IEnumerable<Gram>, IAsyncEnumera
   // MARK: - Public Methods
 
   /// <summary>
-  /// 讀取所有使用者單字詞
+  /// 讀取所有使用者單元圖
   /// </summary>
   public List<Gram> FetchUnigrams() {
     lock (_lock) {
@@ -74,7 +74,7 @@ public sealed class UserDatabase : IDisposable, IEnumerable<Gram>, IAsyncEnumera
   }
 
   /// <summary>
-  /// 讀取使用者雙字詞快取
+  /// 讀取使用者雙元圖快取
   /// </summary>
   /// <param name="limit">限制回傳筆數 (null 表示全部)</param>
   public List<Gram> FetchBigrams(int? limit = null) {

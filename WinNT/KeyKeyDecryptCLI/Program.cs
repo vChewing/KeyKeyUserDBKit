@@ -129,14 +129,14 @@ static async Task<int> HandleDump(string[] args) {
 static Task ShowDecodedData(string dbPath) {
   using var db = new UserDatabase(dbPath);
 
-  Console.WriteLine("\n=== 使用者單字詞 (user_unigrams) ===");
+  Console.WriteLine("\n=== 使用者單元圖 (user_unigrams) ===");
   var unigrams = db.FetchUnigrams();
   foreach (var gram in unigrams) {
     var reading = string.Join(",", gram.KeyArray);
     Console.WriteLine($"  {gram.Current}\t{reading}\t({gram.Probability})");
   }
 
-  Console.WriteLine("\n=== 使用者雙字詞快取 (user_bigram_cache) ===");
+  Console.WriteLine("\n=== 使用者雙元圖快取 (user_bigram_cache) ===");
   var bigrams = db.FetchBigrams(limit: 10);
   foreach (var gram in bigrams) {
     var reading = string.Join(",", gram.KeyArray);

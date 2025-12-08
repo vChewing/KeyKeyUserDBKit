@@ -34,14 +34,14 @@ func showDecodedData(dbPath: String) {
   do {
     let db = try KeyKeyUserDBKit.UserDatabase(path: dbPath)
 
-    print("\n=== 使用者單字詞 (user_unigrams) ===")
+    print("\n=== 使用者單元圖 (user_unigrams) ===")
     let unigrams = try db.fetchUnigrams()
     for gram in unigrams {
       let reading = gram.keyArray.joined(separator: ",")
       print("  \(gram.current)\t\(reading)\t(\(gram.probability))")
     }
 
-    print("\n=== 使用者雙字詞快取 (user_bigram_cache) ===")
+    print("\n=== 使用者雙元圖快取 (user_bigram_cache) ===")
     let bigrams = try db.fetchBigrams(limit: 10)
     for gram in bigrams {
       let reading = gram.keyArray.joined(separator: ",")
