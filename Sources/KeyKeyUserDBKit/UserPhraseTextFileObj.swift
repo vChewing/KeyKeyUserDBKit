@@ -174,18 +174,8 @@ extension KeyKeyUserDBKit {
       // 解密資料庫
       let decryptedData = try decryptDatabaseBlock(encryptedData: encryptedData)
 
-      // 使用臨時檔案讀取 SQLite 資料
-      let tempURL = FileManager.default.temporaryDirectory
-        .appendingPathComponent(UUID().uuidString)
-        .appendingPathExtension("db")
-
-      defer {
-        try? FileManager.default.removeItem(at: tempURL)
-      }
-
-      try decryptedData.write(to: tempURL)
-
-      return try readGramsFromDecryptedDatabase(at: tempURL.path)
+      // 使用記憶體資料庫讀取 SQLite 資料（無需臨時檔案）
+      return try readGramsFromDecryptedDatabase(data: decryptedData)
     }
 
     private static func decryptDatabaseBlock(encryptedData: Data) throws -> Data {
@@ -334,18 +324,53 @@ extension KeyKeyUserDBKit {
     }
 
     private static func readGramsFromDecryptedDatabase(
-      at path: String
+      data: Data
     ) throws
       -> (bigrams: [Gram], candidateOverrides: [Gram]) {
+      // sbooth/CSQLite is built with SQLITE_OMIT_AUTOINIT, so we need to call sqlite3_initialize() first.
       #if !canImport(Darwin)
         sqlite3_initialize()
       #endif
 
+      // 開啟記憶體資料庫
       var db: OpaquePointer?
-      guard sqlite3_open(path, &db) == SQLITE_OK else {
+      guard sqlite3_open(":memory:", &db) == SQLITE_OK else {
         let errorMsg = db.flatMap { String(cString: sqlite3_errmsg($0)) } ?? "Unknown error"
         sqlite3_close(db)
         throw TextFileError.databaseReadFailed(message: errorMsg)
+      }
+
+      // 使用 sqlite3_deserialize 載入資料
+      let dataSize = Int64(data.count)
+      guard let buffer = sqlite3_malloc64(UInt64(dataSize)) else {
+        sqlite3_close(db)
+        throw TextFileError.databaseReadFailed(message: "Failed to allocate memory for database")
+      }
+
+      // 複製資料到緩衝區
+      data.withUnsafeBytes { bytes in
+        guard let baseAddress = bytes.baseAddress else { return }
+        memcpy(buffer, baseAddress, data.count)
+      }
+
+      // 使用 sqlite3_deserialize 載入資料庫
+      // SQLITE_DESERIALIZE_FREEONCLOSE: 當資料庫關閉時，SQLite 會自動釋放緩衝區
+      // SQLITE_DESERIALIZE_RESIZEABLE: 允許資料庫調整大小
+      let result = sqlite3_deserialize(
+        db,
+        "main",
+        buffer.assumingMemoryBound(to: UInt8.self),
+        dataSize,
+        dataSize,
+        UInt32(SQLITE_DESERIALIZE_FREEONCLOSE | SQLITE_DESERIALIZE_RESIZEABLE)
+      )
+
+      guard result == SQLITE_OK else {
+        let errorMsg = db.flatMap { String(cString: sqlite3_errmsg($0)) } ?? "Unknown error"
+        sqlite3_close(db)
+        throw TextFileError.databaseReadFailed(
+          message: "Failed to deserialize database: \(errorMsg)"
+        )
       }
 
       defer { sqlite3_close(db) }

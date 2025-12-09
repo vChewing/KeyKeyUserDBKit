@@ -3,10 +3,13 @@
 // This code is released under the SPDX-License-Identifier: `LGPL-3.0-or-later`.
 
 using System.Collections;
+using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using System.Text;
 
 using Microsoft.Data.Sqlite;
+
+using SQLitePCL;
 
 namespace KeyKeyUserDBKit;
 
@@ -223,19 +226,8 @@ public sealed class UserPhraseTextFileObj : IUserPhraseDataSource, IDisposable {
     // 解密資料庫
     var decryptedData = DecryptDatabaseBlock(encryptedData);
 
-    // 使用臨時檔案讀取 SQLite 資料
-    var tempPath = Path.Combine(Path.GetTempPath(), $"{Guid.NewGuid()}.db");
-
-    try {
-      File.WriteAllBytes(tempPath, decryptedData);
-      return ReadGramsFromDecryptedDatabase(tempPath);
-    } finally {
-      try {
-        File.Delete(tempPath);
-      } catch {
-        // Ignore cleanup errors
-      }
-    }
+    // 使用記憶體資料庫讀取 SQLite 資料（無需臨時檔案）
+    return ReadGramsFromDecryptedDatabase(decryptedData);
   }
 
   private static byte[] DecryptDatabaseBlock(byte[] encryptedData) {
@@ -329,14 +321,49 @@ public sealed class UserPhraseTextFileObj : IUserPhraseDataSource, IDisposable {
     return result;
   }
 
-  private static (List<Gram> bigrams, List<Gram> candidateOverrides) ReadGramsFromDecryptedDatabase(string path) {
+  private static (List<Gram> bigrams, List<Gram> candidateOverrides) ReadGramsFromDecryptedDatabase(byte[] data) {
+    // 使用記憶體資料庫
     var connectionString = new SqliteConnectionStringBuilder {
-      DataSource = path,
-      Mode = SqliteOpenMode.ReadOnly
+      DataSource = ":memory:",
+      Mode = SqliteOpenMode.ReadWriteCreate
     }.ToString();
 
     using var connection = new SqliteConnection(connectionString);
     connection.Open();
+
+    // 取得底層的 sqlite3 handle
+    var handle = connection.Handle
+        ?? throw new TextFileException("Failed to get SQLite handle", TextFileErrorType.DatabaseReadFailed);
+
+    // 使用 sqlite3_malloc64 分配記憶體，讓 SQLite 管理生命週期
+    var dataSize = (long)data.Length;
+    var buffer = raw.sqlite3_malloc64(dataSize);
+    if (buffer == IntPtr.Zero) {
+      throw new TextFileException("Failed to allocate memory for database", TextFileErrorType.DatabaseReadFailed);
+    }
+
+    // 複製資料到緩衝區
+    Marshal.Copy(data, 0, buffer, data.Length);
+
+    // 使用 sqlite3_deserialize 載入資料庫
+    // SQLITE_DESERIALIZE_FREEONCLOSE (1): 當資料庫關閉時，SQLite 會自動釋放緩衝區
+    // SQLITE_DESERIALIZE_RESIZEABLE (2): 允許資料庫調整大小
+    const int SQLITE_DESERIALIZE_FREEONCLOSE = 1;
+    const int SQLITE_DESERIALIZE_RESIZEABLE = 2;
+
+    var result = raw.sqlite3_deserialize(
+      handle,
+      "main",
+      buffer,
+      dataSize,
+      dataSize,
+      SQLITE_DESERIALIZE_FREEONCLOSE | SQLITE_DESERIALIZE_RESIZEABLE
+    );
+
+    if (result != raw.SQLITE_OK) {
+      var errorMessage = raw.sqlite3_errmsg(handle).utf8_to_string();
+      throw new TextFileException($"Failed to deserialize database: {errorMessage}", TextFileErrorType.DatabaseReadFailed);
+    }
 
     var bigrams = new List<Gram>();
     var candidateOverrides = new List<Gram>();
