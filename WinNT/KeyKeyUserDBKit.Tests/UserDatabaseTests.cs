@@ -311,5 +311,62 @@ public class UserDatabaseTests : IDisposable {
       Assert.Equal(syncGrams[i].IsCandidateOverride, asyncGrams[i].IsCandidateOverride);
     }
   }
-}
 
+  // MARK: - In-Memory Database Tests
+
+  [Fact]
+  public void TestInMemoryDatabaseOpen() {
+    var encryptedPath = Path.Combine(AppContext.BaseDirectory, "TestAssets", "SmartMandarinUserData.db");
+
+    using var decryptor = new SEEDecryptor();
+    var encryptedData = File.ReadAllBytes(encryptedPath);
+    var decryptedData = decryptor.Decrypt(encryptedData);
+
+    using var db = new UserDatabase(decryptedData);
+    Assert.NotNull(db);
+  }
+
+  [Fact]
+  public void TestInMemoryDatabaseUnigrams() {
+    // 從檔案開啟
+    using var fileDb = new UserDatabase(_decryptedDbPath);
+    var fileUnigrams = fileDb.FetchUnigrams();
+
+    // 從記憶體開啟
+    var encryptedPath = Path.Combine(AppContext.BaseDirectory, "TestAssets", "SmartMandarinUserData.db");
+    using var decryptor = new SEEDecryptor();
+    var encryptedData = File.ReadAllBytes(encryptedPath);
+    var decryptedData = decryptor.Decrypt(encryptedData);
+    using var memDb = new UserDatabase(decryptedData);
+    var memUnigrams = memDb.FetchUnigrams();
+
+    Assert.Equal(fileUnigrams.Count, memUnigrams.Count);
+  }
+
+  [Fact]
+  public void TestOpenEncryptedConvenienceMethod() {
+    var encryptedPath = Path.Combine(AppContext.BaseDirectory, "TestAssets", "SmartMandarinUserData.db");
+
+    using var db = UserDatabase.OpenEncrypted(encryptedPath);
+    var unigrams = db.FetchUnigrams();
+
+    // 應能成功讀取
+    Assert.NotNull(unigrams);
+  }
+
+  [Fact]
+  public void TestInMemoryDatabaseIteration() {
+    var encryptedPath = Path.Combine(AppContext.BaseDirectory, "TestAssets", "SmartMandarinUserData.db");
+
+    using var db = UserDatabase.OpenEncrypted(encryptedPath);
+
+    var count = 0;
+    foreach (var gram in db) {
+      count++;
+      Assert.NotEmpty(gram.KeyArray);
+      Assert.NotEmpty(gram.Current);
+    }
+
+    Assert.True(count > 0);
+  }
+}

@@ -3,8 +3,11 @@
 // This code is released under the SPDX-License-Identifier: `LGPL-3.0-or-later`.
 
 using System.Collections;
+using System.Runtime.InteropServices;
 
 using Microsoft.Data.Sqlite;
+
+using SQLitePCL;
 
 namespace KeyKeyUserDBKit;
 
@@ -17,7 +20,7 @@ public sealed class UserDatabase : IDisposable, IUserPhraseDataSource, IAsyncEnu
   /// </summary>
   public const double CandidateOverrideProbability = 114.514;
 
-  private readonly string _path;
+  private readonly string? _path;
   private readonly SqliteConnection _connection;
   private readonly System.Threading.Lock _lock = new();
   private bool _disposed;
@@ -43,6 +46,86 @@ public sealed class UserDatabase : IDisposable, IUserPhraseDataSource, IAsyncEnu
     } catch (SqliteException ex) {
       throw new DatabaseException($"Failed to open database: {ex.Message}", ex);
     }
+  }
+
+  /// <summary>
+  /// 從記憶體中的資料開啟資料庫（無需寫入臨時檔案）
+  /// </summary>
+  /// <param name="data">解密後的資料庫二進位資料</param>
+  /// <remarks>
+  /// 此實作使用 sqlite3_deserialize 將資料直接載入記憶體資料庫，
+  /// 與 Swift 版本的行為一致。記憶體由 SQLite 管理，當資料庫關閉時自動釋放。
+  /// </remarks>
+  public UserDatabase(byte[] data) {
+    _path = null;
+
+    // 使用記憶體資料庫
+    var connectionString = new SqliteConnectionStringBuilder {
+      DataSource = ":memory:",
+      Mode = SqliteOpenMode.ReadWriteCreate
+    }.ToString();
+
+    _connection = new SqliteConnection(connectionString);
+
+    try {
+      _connection.Open();
+
+      // 取得底層的 sqlite3 handle
+      var handle = _connection.Handle;
+      if (handle == null) {
+        throw new DatabaseException("Failed to get SQLite handle from connection");
+      }
+
+      // 使用 sqlite3_malloc64 分配記憶體，讓 SQLite 管理生命週期
+      var dataSize = (long)data.Length;
+      var buffer = raw.sqlite3_malloc64(dataSize);
+      if (buffer == IntPtr.Zero) {
+        _connection.Dispose();
+        throw new DatabaseException("Failed to allocate memory for database");
+      }
+
+      // 複製資料到緩衝區
+      Marshal.Copy(data, 0, buffer, data.Length);
+
+      // 使用 sqlite3_deserialize 載入資料庫
+      // SQLITE_DESERIALIZE_FREEONCLOSE (1): 當資料庫關閉時，SQLite 會自動釋放緩衝區
+      // SQLITE_DESERIALIZE_RESIZEABLE (2): 允許資料庫調整大小
+      const int SQLITE_DESERIALIZE_FREEONCLOSE = 1;
+      const int SQLITE_DESERIALIZE_RESIZEABLE = 2;
+
+      var result = raw.sqlite3_deserialize(
+        handle,
+        "main",
+        buffer,
+        dataSize,
+        dataSize,
+        SQLITE_DESERIALIZE_FREEONCLOSE | SQLITE_DESERIALIZE_RESIZEABLE
+      );
+
+      if (result != raw.SQLITE_OK) {
+        var errorMessage = raw.sqlite3_errmsg(handle).utf8_to_string();
+        _connection.Dispose();
+        throw new DatabaseException($"Failed to deserialize database: {errorMessage}");
+      }
+    } catch (SqliteException ex) {
+      _connection.Dispose();
+      throw new DatabaseException($"Failed to open database from memory: {ex.Message}", ex);
+    }
+  }
+
+  // MARK: - Static Factory Methods
+
+  /// <summary>
+  /// 從加密的資料庫檔案載入到記憶體資料庫（無需寫入臨時檔案）
+  /// </summary>
+  /// <param name="path">加密資料庫檔案的路徑</param>
+  /// <param name="decryptor">用於解密的 SEEDecryptor 實例（預設使用預設密鑰）</param>
+  /// <returns>已開啟的記憶體資料庫</returns>
+  public static UserDatabase OpenEncrypted(string path, SEEDecryptor? decryptor = null) {
+    decryptor ??= new SEEDecryptor();
+    var encryptedData = File.ReadAllBytes(path);
+    var decryptedData = decryptor.Decrypt(encryptedData);
+    return new UserDatabase(decryptedData);
   }
 
   // MARK: - Public Methods

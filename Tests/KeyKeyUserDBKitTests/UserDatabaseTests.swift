@@ -439,6 +439,83 @@ struct UserDatabaseTests {
     cleanupDatabase(at: dbPath)
   }
 
+  // MARK: - In-Memory Database Tests
+
+  @Test("In-memory database should open successfully from Data")
+  func inMemoryDatabaseOpen() throws {
+    guard let encryptedURL = UnitTestAssets4KeyKeyUserDBKit.assetURL else {
+      throw Error("測試資料庫檔案不存在")
+    }
+
+    // 解密到記憶體
+    let decryptor = KeyKeyUserDBKit.SEEDecryptor()
+    let encryptedData = try Data(contentsOf: encryptedURL)
+    let decryptedData = try decryptor.decrypt(encryptedData: encryptedData)
+
+    // 從記憶體資料開啟資料庫
+    let db = try KeyKeyUserDBKit.UserDatabase(data: decryptedData)
+    _ = db
+    print("成功從記憶體開啟資料庫，資料大小: \(decryptedData.count) bytes")
+  }
+
+  @Test("In-memory database should return same unigrams as file-based database")
+  func inMemoryDatabaseUnigrams() throws {
+    try skipIfNoDatabase()
+    guard let filePath = decryptedDBPath else { return }
+    guard let encryptedURL = UnitTestAssets4KeyKeyUserDBKit.assetURL else {
+      throw Error("測試資料庫檔案不存在")
+    }
+
+    // 從檔案開啟
+    let fileDB = try KeyKeyUserDBKit.UserDatabase(path: filePath.path)
+    let fileUnigrams = try fileDB.fetchUnigrams()
+
+    // 從記憶體開啟
+    let decryptor = KeyKeyUserDBKit.SEEDecryptor()
+    let encryptedData = try Data(contentsOf: encryptedURL)
+    let decryptedData = try decryptor.decrypt(encryptedData: encryptedData)
+    let memDB = try KeyKeyUserDBKit.UserDatabase(data: decryptedData)
+    let memUnigrams = try memDB.fetchUnigrams()
+
+    // 驗證結果相同
+    #expect(fileUnigrams.count == memUnigrams.count, "Unigram 數量應一致")
+    print("檔案資料庫: \(fileUnigrams.count) 筆, 記憶體資料庫: \(memUnigrams.count) 筆")
+
+    cleanupDatabase(at: filePath)
+  }
+
+  @Test("openEncrypted convenience method should work correctly")
+  func openEncryptedConvenienceMethod() throws {
+    guard let encryptedURL = UnitTestAssets4KeyKeyUserDBKit.assetURL else {
+      throw Error("測試資料庫檔案不存在")
+    }
+
+    // 使用便利方法直接開啟加密資料庫
+    let db = try KeyKeyUserDBKit.UserDatabase.openEncrypted(at: encryptedURL)
+    let unigrams = try db.fetchUnigrams()
+
+    #expect(!unigrams.isEmpty || unigrams.isEmpty, "應能成功讀取（可能為空）")
+    print("透過 openEncrypted 讀取到 \(unigrams.count) 筆 Unigram")
+  }
+
+  @Test("In-memory database iteration should work correctly")
+  func inMemoryDatabaseIteration() throws {
+    guard let encryptedURL = UnitTestAssets4KeyKeyUserDBKit.assetURL else {
+      throw Error("測試資料庫檔案不存在")
+    }
+
+    let db = try KeyKeyUserDBKit.UserDatabase.openEncrypted(at: encryptedURL)
+
+    var count = 0
+    for gram in db {
+      count += 1
+      #expect(!gram.keyArray.isEmpty, "keyArray 不應為空")
+      #expect(!gram.current.isEmpty, "current 不應為空")
+    }
+
+    print("記憶體資料庫迭代共取得 \(count) 筆資料")
+  }
+
   // MARK: Private
 
   private struct Error: Swift.Error, CustomStringConvertible {

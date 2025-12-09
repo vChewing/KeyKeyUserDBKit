@@ -24,6 +24,7 @@ extension KeyKeyUserDBKit {
     public init(path: String) throws {
       self.path = path
       self.actor = .init(label: "KeyKeyUserDBQueue.\(UUID().uuidString)")
+      self.inMemoryData = nil
 
       // sbooth/CSQLite is built with SQLITE_OMIT_AUTOINIT, so we need to call sqlite3_initialize() first.
       #if !canImport(Darwin)
@@ -44,6 +45,67 @@ extension KeyKeyUserDBKit {
       self.db = dbPointer
     }
 
+    /// 從記憶體中的資料開啟資料庫（無需寫入臨時檔案）
+    /// - Parameter data: 解密後的資料庫二進位資料
+    /// - Throws: `DatabaseError` 如果開啟失敗
+    public init(data: Data) throws {
+      self.path = nil
+      self.actor = .init(label: "KeyKeyUserDBQueue.\(UUID().uuidString)")
+
+      // sbooth/CSQLite is built with SQLITE_OMIT_AUTOINIT, so we need to call sqlite3_initialize() first.
+      #if !canImport(Darwin)
+        sqlite3_initialize()
+      #endif
+
+      // 開啟一個記憶體資料庫
+      var dbPointer: OpaquePointer?
+      guard sqlite3_open(":memory:", &dbPointer) == SQLITE_OK else {
+        let errorMessage: String
+        if let dbPointer {
+          errorMessage = String(cString: sqlite3_errmsg(dbPointer))
+          sqlite3_close(dbPointer)
+        } else {
+          errorMessage = "Unknown error"
+        }
+        throw DatabaseError.openFailed(message: errorMessage)
+      }
+
+      // 複製 data 到可變的記憶體區塊（sqlite3_deserialize 需要）
+      // 使用 sqlite3_malloc64 分配記憶體，讓 SQLite 管理生命週期
+      let dataSize = Int64(data.count)
+      guard let buffer = sqlite3_malloc64(UInt64(dataSize)) else {
+        sqlite3_close(dbPointer)
+        throw DatabaseError.openFailed(message: "Failed to allocate memory for database")
+      }
+
+      // 複製資料到緩衝區
+      data.withUnsafeBytes { bytes in
+        guard let baseAddress = bytes.baseAddress else { return }
+        memcpy(buffer, baseAddress, data.count)
+      }
+
+      // 使用 sqlite3_deserialize 載入資料庫
+      // SQLITE_DESERIALIZE_FREEONCLOSE: 當資料庫關閉時，SQLite 會自動釋放緩衝區
+      // SQLITE_DESERIALIZE_RESIZEABLE: 允許資料庫調整大小（雖然我們只讀取）
+      let result = sqlite3_deserialize(
+        dbPointer,
+        "main",
+        buffer.assumingMemoryBound(to: UInt8.self),
+        dataSize,
+        dataSize,
+        UInt32(SQLITE_DESERIALIZE_FREEONCLOSE | SQLITE_DESERIALIZE_RESIZEABLE)
+      )
+
+      guard result == SQLITE_OK else {
+        let errorMessage = String(cString: sqlite3_errmsg(dbPointer))
+        sqlite3_close(dbPointer)
+        throw DatabaseError.openFailed(message: "Failed to deserialize database: \(errorMessage)")
+      }
+
+      self.db = dbPointer
+      self.inMemoryData = nil // 記憶體由 SQLite 管理，不需要保留引用
+    }
+
     deinit {
       actor.sync {
         if let db {
@@ -56,6 +118,22 @@ extension KeyKeyUserDBKit {
 
     /// 候選字覆蓋記錄的預設權重
     public static let candidateOverrideProbability: Double = 114.514
+
+    /// 從加密的資料庫檔案載入到記憶體資料庫（無需寫入臨時檔案）
+    /// - Parameters:
+    ///   - url: 加密資料庫檔案的 URL
+    ///   - decryptor: 用於解密的 SEEDecryptor 實例（預設使用預設密鑰）
+    /// - Returns: 已開啟的記憶體資料庫
+    /// - Throws: `DecryptionError` 或 `DatabaseError`
+    public static func openEncrypted(
+      at url: URL,
+      decryptor: SEEDecryptor = .init()
+    ) throws
+      -> UserDatabase {
+      let encryptedData = try Data(contentsOf: url)
+      let decryptedData = try decryptor.decrypt(encryptedData: encryptedData)
+      return try UserDatabase(data: decryptedData)
+    }
 
     // MARK: - Public Methods
 
@@ -216,8 +294,10 @@ extension KeyKeyUserDBKit {
     // MARK: Private
 
     private nonisolated(unsafe) let db: OpaquePointer?
-    private let path: String
+    private let path: String?
     private let actor: DispatchQueue
+    /// 保留記憶體資料的引用（如果需要的話）
+    private let inMemoryData: Data?
   }
 }
 
