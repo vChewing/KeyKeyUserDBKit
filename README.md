@@ -20,7 +20,7 @@ Yahoo! 奇摩輸入法 (KeyKey) 使用者資料庫解密 Swift Package。
 
 為了因應這個需求，唯音專案新開發了 KeyKeyUserDBKit 這款開發套件，可以做到在不運行奇摩輸入法的前提下從使用者資料庫  `SmartMandarinUserData.db` 救出使用者片語（Unigram、Bigram-Cache、Candidate-Override）資料。
 
-唯音專案推出此套件餽贈社會，也希望能得到一些捐助。詳細資訊可洽[唯音輸入法的軟體主頁](https://vchewing.github.io/README.html)。也[歡迎各位 macOS 奇摩輸入法難民們嘗試唯音輸入法](https://vchewing.github.io/manual/onboarding_kimo.html)。
+唯音專案推出此套件餽贈社會，也希望能得到一些捐助。詳細資訊可洽[唯音輸入法的軟體主頁](https://vchewing.github.io/README.html)。也[歡迎各位 macOS 奇摩輸入法難民們嘗試唯音輸入法](https://vchewing.github.io/manual/onboarding_kimo.html)。奇摩輸入法官方許諾照顧的 macOS 版本到 10.8 為止；唯音輸入法從 macOS 10.9 開始支援（僅限 Aqua 紀念版分支，與主流發行版分支同步更新、功能相同）、且支援 macOS 的 App Sandbox 特性（就副廠注音輸入法而言幾乎算是獨一家）。如果您正好在使用 macOS 10.9 ~ 10.14 系統的話，唯音輸入法將會是您的最佳選擇。
 
 ## 功能
 
