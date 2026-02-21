@@ -17,9 +17,10 @@ jobs:
   swift-linux:
     name: Swift (Linux)
     runs-on: ubuntu-latest
-    container:
-      image: swift:latest
     steps:
+      - name: Swift Setup
+        uses: SwiftyLab/setup-swift@latest
+
       - name: Checkout
         uses: actions/checkout@v4
 
