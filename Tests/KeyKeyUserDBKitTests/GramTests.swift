@@ -17,7 +17,7 @@ struct GramTests {
     let current = "你好"
     let probability = 0.5
 
-    let gram = KeyKeyUserDBKit.Gram(
+    let gram = KeyKeyUserDBKit.KeyKeyGram(
       keyArray: keyArray,
       current: current,
       probability: probability
@@ -37,7 +37,7 @@ struct GramTests {
     let current = "好"
     let previous = "你"
 
-    let gram = KeyKeyUserDBKit.Gram(
+    let gram = KeyKeyUserDBKit.KeyKeyGram(
       keyArray: keyArray,
       current: current,
       previous: previous
@@ -53,7 +53,7 @@ struct GramTests {
 
   @Test("Create Bigram with empty previous should set previous to nil")
   func createBigram_WithEmptyPrevious_ShouldSetPreviousToNil() {
-    let gram = KeyKeyUserDBKit.Gram(
+    let gram = KeyKeyUserDBKit.KeyKeyGram(
       keyArray: ["ㄏㄠˇ"],
       current: "好",
       previous: ""
@@ -68,7 +68,7 @@ struct GramTests {
     let current = "妳"
     let probability = 114.514
 
-    let gram = KeyKeyUserDBKit.Gram(
+    let gram = KeyKeyUserDBKit.KeyKeyGram(
       keyArray: keyArray,
       current: current,
       probability: probability,
@@ -86,7 +86,7 @@ struct GramTests {
 
   @Test("isReadingMismatched should return true when lengths differ")
   func isReadingMismatched_WhenLengthsDiffer_ShouldReturnTrue() {
-    let gram = KeyKeyUserDBKit.Gram(
+    let gram = KeyKeyUserDBKit.KeyKeyGram(
       keyArray: ["ㄋㄧˇ", "ㄏㄠˇ"],
       current: "你好嗎" // 2 keys, 3 chars
     )
@@ -95,7 +95,7 @@ struct GramTests {
 
   @Test("isReadingMismatched should return false when lengths match")
   func isReadingMismatched_WhenLengthsMatch_ShouldReturnFalse() {
-    let gram = KeyKeyUserDBKit.Gram(
+    let gram = KeyKeyUserDBKit.KeyKeyGram(
       keyArray: ["ㄋㄧˇ", "ㄏㄠˇ"],
       current: "你好" // 2 keys, 2 chars
     )
@@ -104,7 +104,7 @@ struct GramTests {
 
   @Test("segLength should return keyArray length")
   func segLength_ShouldReturnKeyArrayLength() {
-    let gram = KeyKeyUserDBKit.Gram(
+    let gram = KeyKeyUserDBKit.KeyKeyGram(
       keyArray: ["ㄋㄧˇ", "ㄏㄠˇ", "ㄇㄚ"],
       current: "你好嗎"
     )
@@ -113,7 +113,7 @@ struct GramTests {
 
   @Test("asTuple should return correct tuple")
   func asTuple_ShouldReturnCorrectTuple() {
-    let gram = KeyKeyUserDBKit.Gram(
+    let gram = KeyKeyUserDBKit.KeyKeyGram(
       keyArray: ["ㄏㄠˇ"],
       current: "好",
       previous: "你"
@@ -130,7 +130,7 @@ struct GramTests {
 
   @Test("descriptionSansReading for Unigram should format correctly")
   func descriptionSansReading_Unigram_ShouldFormatCorrectly() {
-    let gram = KeyKeyUserDBKit.Gram(
+    let gram = KeyKeyUserDBKit.KeyKeyGram(
       keyArray: ["ㄋㄧˇ"],
       current: "你",
       probability: 0.5
@@ -140,7 +140,7 @@ struct GramTests {
 
   @Test("descriptionSansReading for Bigram should format correctly")
   func descriptionSansReading_Bigram_ShouldFormatCorrectly() {
-    let gram = KeyKeyUserDBKit.Gram(
+    let gram = KeyKeyUserDBKit.KeyKeyGram(
       keyArray: ["ㄏㄠˇ"],
       current: "好",
       previous: "你"
@@ -150,7 +150,7 @@ struct GramTests {
 
   @Test("descriptionSansReading for CandidateOverride should format correctly")
   func descriptionSansReading_CandidateOverride_ShouldFormatCorrectly() {
-    let gram = KeyKeyUserDBKit.Gram(
+    let gram = KeyKeyUserDBKit.KeyKeyGram(
       keyArray: ["ㄋㄧˇ"],
       current: "妳",
       probability: 114.514,
@@ -161,7 +161,7 @@ struct GramTests {
 
   @Test("describe should include header and body")
   func describe_ShouldIncludeHeaderAndBody() {
-    let gram = KeyKeyUserDBKit.Gram(
+    let gram = KeyKeyUserDBKit.KeyKeyGram(
       keyArray: ["ㄋㄧˇ"],
       current: "你",
       probability: 0.5
@@ -175,7 +175,7 @@ struct GramTests {
 
   @Test("description should call describe")
   func description_ShouldCallDescribe() {
-    let gram = KeyKeyUserDBKit.Gram(
+    let gram = KeyKeyUserDBKit.KeyKeyGram(
       keyArray: ["ㄋㄧˇ"],
       current: "你",
       probability: 0.5
@@ -187,12 +187,12 @@ struct GramTests {
 
   @Test("Equality with same values should be equal")
   func equality_SameValues_ShouldBeEqual() {
-    let gram1 = KeyKeyUserDBKit.Gram(
+    let gram1 = KeyKeyUserDBKit.KeyKeyGram(
       keyArray: ["ㄋㄧˇ"],
       current: "你",
       probability: 0.5
     )
-    let gram2 = KeyKeyUserDBKit.Gram(
+    let gram2 = KeyKeyUserDBKit.KeyKeyGram(
       keyArray: ["ㄋㄧˇ"],
       current: "你",
       probability: 0.5
@@ -204,12 +204,12 @@ struct GramTests {
 
   @Test("Equality with different values should not be equal")
   func equality_DifferentValues_ShouldNotBeEqual() {
-    let gram1 = KeyKeyUserDBKit.Gram(
+    let gram1 = KeyKeyUserDBKit.KeyKeyGram(
       keyArray: ["ㄋㄧˇ"],
       current: "你",
       probability: 0.5
     )
-    let gram2 = KeyKeyUserDBKit.Gram(
+    let gram2 = KeyKeyUserDBKit.KeyKeyGram(
       keyArray: ["ㄋㄧˇ"],
       current: "妳",
       probability: 0.5
@@ -222,7 +222,7 @@ struct GramTests {
 
   @Test("Codable encode/decode should preserve values")
   func codable_EncodeDecode_ShouldPreserveValues() throws {
-    let originalGram = KeyKeyUserDBKit.Gram(
+    let originalGram = KeyKeyUserDBKit.KeyKeyGram(
       keyArray: ["ㄋㄧˇ", "ㄏㄠˇ"],
       current: "你好",
       previous: "大家",
@@ -234,7 +234,7 @@ struct GramTests {
     let data = try encoder.encode(originalGram)
 
     let decoder = JSONDecoder()
-    let decodedGram = try decoder.decode(KeyKeyUserDBKit.Gram.self, from: data)
+    let decodedGram = try decoder.decode(KeyKeyUserDBKit.KeyKeyGram.self, from: data)
 
     #expect(originalGram == decodedGram)
     #expect(originalGram.isCandidateOverride == decodedGram.isCandidateOverride)
@@ -242,7 +242,7 @@ struct GramTests {
 
   @Test("Codable for CandidateOverride should preserve flag")
   func codable_CandidateOverride_ShouldPreserveFlag() throws {
-    let originalGram = KeyKeyUserDBKit.Gram(
+    let originalGram = KeyKeyUserDBKit.KeyKeyGram(
       keyArray: ["ㄋㄧˇ"],
       current: "妳",
       probability: 114.514,
@@ -253,7 +253,7 @@ struct GramTests {
     let data = try encoder.encode(originalGram)
 
     let decoder = JSONDecoder()
-    let decodedGram = try decoder.decode(KeyKeyUserDBKit.Gram.self, from: data)
+    let decodedGram = try decoder.decode(KeyKeyUserDBKit.KeyKeyGram.self, from: data)
 
     #expect(decodedGram.isCandidateOverride == true)
   }
@@ -262,14 +262,14 @@ struct GramTests {
 
   @Test("Raw tuple constructor should set correct properties")
   func rawTupleConstructor_ShouldSetCorrectProperties() {
-    let rawTuple: KeyKeyUserDBKit.Gram.GramRAW = (
+    let rawTuple: KeyKeyUserDBKit.KeyKeyGram.GramRAW = (
       keyArray: ["ㄋㄧˇ"],
       value: "你",
       probability: 0.5,
       previous: "我"
     )
 
-    let gram = KeyKeyUserDBKit.Gram(rawTuple)
+    let gram = KeyKeyUserDBKit.KeyKeyGram(rawTuple)
 
     #expect(gram.keyArray == ["ㄋㄧˇ"])
     #expect(gram.current == "你")
@@ -280,14 +280,14 @@ struct GramTests {
 
   @Test("Raw tuple constructor with CandidateOverride should set flag")
   func rawTupleConstructor_WithCandidateOverride_ShouldSetFlag() {
-    let rawTuple: KeyKeyUserDBKit.Gram.GramRAW = (
+    let rawTuple: KeyKeyUserDBKit.KeyKeyGram.GramRAW = (
       keyArray: ["ㄋㄧˇ"],
       value: "妳",
       probability: 114.514,
       previous: nil
     )
 
-    let gram = KeyKeyUserDBKit.Gram(rawTuple, isCandidateOverride: true)
+    let gram = KeyKeyUserDBKit.KeyKeyGram(rawTuple, isCandidateOverride: true)
 
     #expect(gram.isCandidateOverride == true)
   }

@@ -210,7 +210,7 @@ struct UserDatabaseTests {
     let db = try KeyKeyUserDBKit.UserDatabase(path: dbPath.path)
 
     // 使用 Sequence 協定迭代
-    var iteratedGrams: [KeyKeyUserDBKit.Gram] = []
+    var iteratedGrams: [KeyKeyUserDBKit.KeyKeyGram] = []
     for gram in db {
       iteratedGrams.append(gram)
     }
@@ -321,7 +321,7 @@ struct UserDatabaseTests {
     let db = try KeyKeyUserDBKit.UserDatabase(path: dbPath.path)
 
     // 使用 AsyncSequence 協定迭代
-    var iteratedGrams: [KeyKeyUserDBKit.Gram] = []
+    var iteratedGrams: [KeyKeyUserDBKit.KeyKeyGram] = []
     for await gram in db.async {
       iteratedGrams.append(gram)
     }
@@ -409,13 +409,13 @@ struct UserDatabaseTests {
     let db = try KeyKeyUserDBKit.UserDatabase(path: dbPath.path)
 
     // 同步迭代
-    var syncGrams: [KeyKeyUserDBKit.Gram] = []
+    var syncGrams: [KeyKeyUserDBKit.KeyKeyGram] = []
     for gram in db {
       syncGrams.append(gram)
     }
 
     // 非同步迭代
-    var asyncGrams: [KeyKeyUserDBKit.Gram] = []
+    var asyncGrams: [KeyKeyUserDBKit.KeyKeyGram] = []
     for await gram in db.async {
       asyncGrams.append(gram)
     }
